@@ -5,14 +5,13 @@ use components::editor_contents::*;
 use components::editor::*;
 use components::output::*;
 use components::reader::*;
+use components::editor_rows::*;
 
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind, KeyEventState, KeyModifiers};
 use crossterm::{cursor, event, execute, queue, terminal};
 use crossterm::terminal::ClearType;
 use std::io::{self, stdout, Error, Write};
 use std::time::Duration;
-
-
 
 fn main() -> Result<(), Error> {
     let _cleanup = CleanUp;

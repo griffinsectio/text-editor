@@ -5,6 +5,7 @@ pub struct CursorController {
     pub cursor_y: usize,
     num_columns: usize,
     num_rows: usize,
+    pub row_offset: usize,
 }
 
 impl CursorController {
@@ -14,10 +15,11 @@ impl CursorController {
             cursor_y: 0,
             num_columns: win_size.0,
             num_rows: win_size.1,
+            row_offset: 0,
         }
     }
 
-    pub fn move_cursor(&mut self, direction: KeyCode) {
+    pub fn move_cursor(&mut self, direction: KeyCode, number_of_row: usize) {
         match direction {
             KeyCode::Char('k') => {
                 if self.cursor_y != 0 {
@@ -30,7 +32,7 @@ impl CursorController {
                 }
             },
             KeyCode::Char('j') => {
-                if self.cursor_y < self.num_rows - 1 {
+                if self.cursor_y < number_of_row {
                     self.cursor_y += 1;
                 }
             },
@@ -46,6 +48,20 @@ impl CursorController {
                 self.cursor_x = self.num_columns - 1
             }
             _ => unimplemented!()
+        }
+    }
+
+    pub fn scroll(&mut self) {
+        // self.row_offset = cmp::min(self.row_offset, self.cursor_y);
+        if self.cursor_y < self.row_offset {
+            self.row_offset = self.cursor_y;
+        }
+
+        let mut file = std::fs::File::options().append(true).open("offset_log.txt").unwrap();
+        file.write(format!("{} {}\r\n", self.row_offset, self.cursor_y).as_bytes()).unwrap();
+
+        if self.cursor_y >= self.row_offset + self.num_rows {
+            self.row_offset = self.cursor_y - self.num_rows + 1;
         }
     }
 

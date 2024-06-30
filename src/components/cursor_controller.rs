@@ -6,6 +6,7 @@ pub struct CursorController {
     num_columns: usize,
     num_rows: usize,
     pub row_offset: usize,
+    pub column_offset: usize,
 }
 
 impl CursorController {
@@ -16,10 +17,11 @@ impl CursorController {
             num_columns: win_size.0,
             num_rows: win_size.1,
             row_offset: 0,
+            column_offset: 0,
         }
     }
 
-    pub fn move_cursor(&mut self, direction: KeyCode, number_of_row: usize) {
+    pub fn move_cursor(&mut self, direction: KeyCode, editor_rows: &EditorRows) {
         match direction {
             KeyCode::Char('k') => {
                 if self.cursor_y != 0 {
@@ -29,16 +31,22 @@ impl CursorController {
             KeyCode::Char('h') => {
                 if self.cursor_x != 0 {
                     self.cursor_x -= 1;
+                } else if self.cursor_y > 0 {
+                    self.cursor_y -= 1;
+                    self.cursor_x = editor_rows.get_row(self.cursor_y).len();
                 }
             },
             KeyCode::Char('j') => {
-                if self.cursor_y < number_of_row {
+                if self.cursor_y < editor_rows.number_of_rows() {
                     self.cursor_y += 1;
                 }
             },
             KeyCode::Char('l') => {
-                if self.cursor_x < self.num_columns - 1 {
+                if self.cursor_y < editor_rows.number_of_rows() && self.cursor_x < editor_rows.get_row(self.cursor_y).len() {
                     self.cursor_x += 1;
+                } else if self.cursor_y < editor_rows.number_of_rows() {
+                    self.cursor_y += 1;
+                    self.cursor_x = 0;
                 }
             },
             KeyCode::Home => {
@@ -47,7 +55,16 @@ impl CursorController {
             KeyCode::End => {
                 self.cursor_x = self.num_columns - 1
             }
-            _ => unimplemented!()
+            _ => unimplemented!(),
+        }
+        let row_len = if self.cursor_y < editor_rows.number_of_rows() {
+            editor_rows.get_row(self.cursor_y).len()
+        } else {
+            0
+        };
+
+        if row_len < self.cursor_x {
+            self.cursor_x = row_len
         }
     }
 
@@ -62,6 +79,13 @@ impl CursorController {
 
         if self.cursor_y >= self.row_offset + self.num_rows {
             self.row_offset = self.cursor_y - self.num_rows + 1;
+        }
+
+        if self.cursor_x < self.column_offset {
+            self.column_offset = self.cursor_x
+        }
+        if self.cursor_x >= self.column_offset + self.num_columns {
+            self.column_offset = self.cursor_x - self.num_columns + 1
         }
     }
 

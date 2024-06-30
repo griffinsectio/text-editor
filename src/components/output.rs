@@ -37,7 +37,7 @@ impl Output {
 
         self.draw_rows();
 
-        let cursor_x = self.cursor_controller.cursor_x;
+        let cursor_x = self.cursor_controller.cursor_x - self.cursor_controller.column_offset;
         let cursor_y = self.cursor_controller.cursor_y - self.cursor_controller.row_offset;
 
         queue!(
@@ -71,8 +71,22 @@ impl Output {
                     self.editor_contents.push('~');
                 }
             } else {
-                let len = cmp::min(self.editor_rows.get_row(file_row).len(), num_columns);
-                self.editor_contents.push_str(&self.editor_rows.get_row(file_row)[..len])
+                let row = self.editor_rows.get_row(file_row);
+                let column_offset = self.cursor_controller.column_offset;
+                // let len = cmp::min(self.editor_rows.get_row(file_row).len(), num_columns);
+                // self.editor_contents.push_str(&self.editor_rows.get_row(file_row)[..len])
+                let len = if row.len() < column_offset {
+                    0
+                } else {
+                    let len = row.len() - column_offset;
+                    if len > num_columns {
+                        num_columns
+                    } else {
+                        len
+                    }
+                };
+                let start = if len == 0 { 0 } else { column_offset };
+                self.editor_contents.push_str(&row[start..start + len]);
             }
 
             queue!(
@@ -90,7 +104,7 @@ impl Output {
     }
 
     pub fn move_cursor(&mut self, direction: KeyCode) {
-        self.cursor_controller.move_cursor(direction, self.editor_rows.number_of_rows());
+        self.cursor_controller.move_cursor(direction, &self.editor_rows);
     }
 
 }
